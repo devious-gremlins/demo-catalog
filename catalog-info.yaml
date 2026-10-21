@@ -7,7 +7,7 @@ metadata:
   description: Core microservice responsible for handling order placement and payment flows.
   annotations:
     backstage.io/techdocs-ref: dir:./docs/order-service
-    backstage.io/source-location: url:https://github.com/devious-gremlins/demo-catalog
+    backstage.io/source-location: url:https://github.com/devious-gremlins/demo-catalog/blob/main/catalog-info.yaml
     github.com/project-slug: devious-gremlins/demo-catalog
   links:
     - url: https://github.com/devious-gremlins/demo-catalog
