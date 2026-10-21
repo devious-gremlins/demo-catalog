@@ -9,6 +9,7 @@ metadata:
     backstage.io/techdocs-ref: dir:./docs/order-service
     backstage.io/source-location: url:https://github.com/devious-gremlins/demo-catalog/blob/main/catalog-info.yaml
     github.com/project-slug: devious-gremlins/demo-catalog
+    orchestrator.io/workflows: '["order-management", "widgets-showcase"]'
   links:
     - url: https://github.com/devious-gremlins/demo-catalog
       title: GitHub Repository
@@ -36,6 +37,7 @@ metadata:
   description: Microservice tracking product catalog availability and warehouse inventory.
   annotations:
     backstage.io/techdocs-ref: dir:./docs/inventory-service
+    orchestrator.io/workflows: '["hello-world"]'
 spec:
   type: service
   lifecycle: production
@@ -117,3 +119,94 @@ spec:
     picture: https://avatars.githubusercontent.com/u/1024025?v=4
   memberOf:
     - engineering-team
+
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: order-management-wizard
+  title: Order Management Wizard
+  description: Multi-step order workflow for testing step navigation (RHDHPLAN-1383)
+  annotations:
+    orchestrator.io/workflows: '["order-management"]'
+  tags:
+    - orchestrator
+    - test-day
+spec:
+  owner: group:default/engineering-team
+  system: default/e-commerce
+  type: service
+
+  parameters:
+    - title: Choose Target Entity
+      required:
+        - target_entity
+      properties:
+        target_entity:
+          title: Target Entity for the workflow run
+          description: Select an entity from the catalog
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Component
+    - title: Order Details
+      required:
+        - productId
+        - quantity
+        - priority
+      properties:
+        productId:
+          title: Product
+          type: string
+          enum:
+            - keyboard
+            - monitor
+            - laptop
+            - dock
+          default: keyboard
+          ui:autofocus: true
+        quantity:
+          title: Quantity
+          type: number
+          minimum: 1
+          maximum: 100
+          default: 1
+        priority:
+          title: Priority
+          type: string
+          enum:
+            - standard
+            - express
+          default: standard
+    - title: Contact and Notes
+      properties:
+        notes:
+          title: Notes
+          type: string
+          maxLength: 200
+          description: Free-form notes about this order
+        notify:
+          title: Notify me when the order completes
+          type: boolean
+          default: false
+
+  steps:
+    - id: runWorkflow
+      name: Run workflow
+      action: orchestrator:workflow:run
+      input:
+        workflow_id: order-management
+        target_entity: ${{ parameters.target_entity }}
+        parameters:
+          productId: ${{ parameters.productId }}
+          quantity: ${{ parameters.quantity }}
+          priority: ${{ parameters.priority }}
+
+  output:
+    links:
+      - title: Open workflow run
+        url: ${{ steps.runWorkflow.output.instanceUrl }}
+      - title: Open Workflows Tab
+        url: ${{ steps.runWorkflow.output.catalogEntityUrl }}
+      - title: View in Orchestrator
+        url: ${{ steps.runWorkflow.output.orchestratorWorkflowsUrl }}
