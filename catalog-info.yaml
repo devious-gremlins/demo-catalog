@@ -1,0 +1,119 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-service
+  title: Order Service
+  description: Core microservice responsible for handling order placement and payment flows.
+  annotations:
+    backstage.io/techdocs-ref: dir:./docs/order-service
+    backstage.io/source-location: url:https://github.com/devious-gremlins/demo-catalog
+    github.com/project-slug: devious-gremlins/demo-catalog
+  links:
+    - url: https://github.com/devious-gremlins/demo-catalog
+      title: GitHub Repository
+      icon: github
+    - url: https://grafana.example.com/d/order-service
+      title: Service Dashboard
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/engineering-team
+  system: default/e-commerce
+  providesApis:
+    - api:default/payment-api
+  dependsOn:
+    - resource:default/order-db
+    - component:default/inventory-service
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: inventory-service
+  title: Inventory Service
+  description: Microservice tracking product catalog availability and warehouse inventory.
+  annotations:
+    backstage.io/techdocs-ref: dir:./docs/inventory-service
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/engineering-team
+  system: default/e-commerce
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: payment-api
+  title: Payment API
+  description: REST API specification for credit card transactions and refund handling.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:default/engineering-team
+  definition: |
+    openapi: "3.0.0"
+    info:
+      version: "1.0.0"
+      title: Payment API
+    paths:
+      /payments:
+        post:
+          summary: Process a payment
+          responses:
+            '200':
+              description: Payment authorized
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: order-db
+  title: Orders PostgreSQL Database
+  description: Primary transactional database storing customer order histories.
+spec:
+  type: database
+  lifecycle: production
+  owner: group:default/engineering-team
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: e-commerce
+  title: E-Commerce System
+  description: Core platform services supporting retail orders and catalog browsing.
+spec:
+  owner: group:default/engineering-team
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: engineering-team
+  title: Platform Engineering Team
+  description: Core infrastructure, developer tooling, and shared platform services.
+spec:
+  type: team
+  profile:
+    displayName: Platform Engineering
+    email: platform-eng@example.com
+    picture: https://avatars.githubusercontent.com/u/73601258?s=200&v=4
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: alex-developer
+  title: Alex Developer
+  description: Staff Platform Engineer leading service architecture and developer portal workflows.
+spec:
+  profile:
+    displayName: Alex Developer
+    email: alex.developer@example.com
+    picture: https://avatars.githubusercontent.com/u/1024025?v=4
+  memberOf:
+    - engineering-team

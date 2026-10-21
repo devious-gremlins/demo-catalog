@@ -1,0 +1,6 @@
+site_name: Inventory Service
+site_description: Microservice tracking product catalog availability and warehouse inventory
+plugins:
+  - techdocs-core
+nav:
+  - Overview: index.md

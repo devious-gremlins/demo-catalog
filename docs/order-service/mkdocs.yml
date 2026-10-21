@@ -1,0 +1,8 @@
+site_name: Order Service
+site_description: Core microservice for order placement and payment flows
+plugins:
+  - techdocs-core
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - API Reference: api.md
