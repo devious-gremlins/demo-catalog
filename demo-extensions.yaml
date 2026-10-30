@@ -1,0 +1,105 @@
+# ==============================================================================
+# RHDHPLAN-552 Demo Snippets for app-config.local.yaml
+# Copy or merge this block into your rhdh-local configs/app-config/app-config.local.yaml
+# ==============================================================================
+
+app:
+  extensions:
+    # --------------------------------------------------------------------------
+    # Base NFS Configuration (Home Page & RHDH Sidebar)
+    # --------------------------------------------------------------------------
+    - nav-content:app: false
+    - page:home:
+        config:
+          path: /
+    - api:home/visits: true
+    - app-root-element:home/visit-listener: true
+    - home-page-widget:search/search-bar: false
+
+    # --------------------------------------------------------------------------
+    # DEMO SCENE 2: Company A — "DevOps-Centric Organization"
+    # Focus: Developer velocity, standardized CI/CD pipelines, documentation
+    # To enable: uncomment this block (and keep Scene 3 commented out)
+    # --------------------------------------------------------------------------
+    - entity-content:catalog/overview:
+        config:
+          group: overview
+
+    - entity-content:github-actions:
+        config:
+          title: CI/CD
+          group: ci-cd
+
+    - entity-content:techdocs:
+        config:
+          title: Documentation
+          group: documentation
+          filter:
+            $not:
+              kind:
+                $in: [user, group]
+
+    - page:catalog/entity:
+        config:
+          groups:
+            - overview:
+                title: Overview
+            - ci-cd:
+                title: CI/CD
+            - documentation:
+                title: Documentation
+
+    # --------------------------------------------------------------------------
+    # DEMO SCENE 3: Company B — "Architecture & Dependency Governance Organization"
+    # Focus: Single-pane-of-glass overview with ordered dependencies, API contracts
+    # To enable: comment out Scene 2 above and uncomment this block below
+    # --------------------------------------------------------------------------
+    - entity-content:catalog/overview:
+        config:
+          group: overview
+
+    - entity-content:api-docs/apis:
+        config:
+          title: API Specifications
+          group: apis
+
+    - entity-content:techdocs:
+        config:
+          title: Documentation
+          group: documentation
+          filter:
+            $not:
+              kind:
+                $in: [user, group]
+
+    # 4. Suppress CI/CD tab AND its overview widget
+    - entity-content:github-actions: false
+    - entity-card:github-actions/recent-workflow-runs: false
+
+    # 5. Define tab sequence: Overview -> API Specifications -> Documentation
+    - page:catalog/entity:
+        config:
+          groups:
+            - overview:
+                title: Overview
+            - apis:
+                title: API Specifications
+            - documentation:
+                title: Documentation
+
+    # 6. Re-attach Dependency Cards from the Dependencies tab onto Overview & order them:
+    #    (In RHDH app-defaults, these cards are attached to the Dependencies tab by default)
+    #    1. Database & resource dependencies table first
+    - entity-card:catalog/depends-on-resources:
+        attachTo:
+          id: entity-content:catalog/overview
+          input: cards
+
+    #    2. Downstream microservice dependencies table second
+    - entity-card:catalog/depends-on-components:
+        attachTo:
+          id: entity-content:catalog/overview
+          input: cards
+
+    # 7. Suppress bulky relations graph
+    - entity-card:catalog-graph/relations: false
