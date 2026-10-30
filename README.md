@@ -22,7 +22,8 @@ The entities in `catalog-info.yaml` represent a realistic e-commerce microservic
 
 ## Dynamic Plugins Rundown
 
-The setup script configures `configs/dynamic-plugins/dynamic-plugins.override.yaml` with the minimal set of dynamic plugins required for this demo:
+The setup script writes `rhdh-customizations/configs/dynamic-plugins/dynamic-plugins.override.yaml`
+with the minimal set of dynamic plugins required for this demo:
 
 | Plugin Package | Purpose in Demo |
 | -------------- | --------------- |
@@ -30,7 +31,7 @@ The setup script configures `configs/dynamic-plugins/dynamic-plugins.override.ya
 | `backstage-plugin-auth-backend-module-guest-provider` | Enables guest authentication so local instances can start and authenticate immediately without external OAuth credentials. |
 | `backstage-community-plugin-github-actions` | Provides the GitHub Actions tab (`entity-content:github-actions`) and overview card (`entity-card:github-actions/recent-workflow-runs`) used in Company A's DevOps view. |
 | `backstage-plugin-org` | Provides the `user-profile`, `group-profile`, and `ownership` cards for User and Group entities. |
-| `backstage-plugin-auth-backend-module-github-provider` | GitHub authentication backend module (optional). |
+| `backstage-plugin-auth-backend-module-github-provider` | GitHub authentication backend module. **Not installed by the script** — add it yourself if the demo needs real GitHub sign-in instead of guest auth. |
 | `backstage-community-plugin-analytics-provider-segment` | Explicitly **disabled** (`enabled: false`) to prevent external telemetry and Content Security Policy (CSP) errors in local demo environments. |
 
 > **Note on Core Plugins:** Standard Backstage plugins (`catalog`, `techdocs`, `api-docs`, `catalog-graph`) are baked into the core RHDH container image as built-in NFS plugins.
@@ -39,24 +40,35 @@ The setup script configures `configs/dynamic-plugins/dynamic-plugins.override.ya
 
 ## Quick Setup with `rhdh-local`
 
-### 1. Set your `rhdh-local` clone path:
-Set `RHDH_LOCAL_DIR` to the location of your local `rhdh-local` checkout:
-```bash
-export RHDH_LOCAL_DIR="${RHDH_LOCAL_DIR:-$HOME/Source/redhat-developer/rhdh-local}"
-```
+The demo is consumed **by reference**. This checkout is bind-mounted read-only into
+the container at `/opt/app-root/src/configs/catalog-entities/demo`, so the entities
+and TechDocs sources you see in the browser are always the ones in this repository.
+Nothing is copied into the `rhdh-local` clone.
 
-### 2. Deploy configuration & entities:
-Run the setup script from this directory:
-```bash
-./setup-rhdh-local.sh
-```
-*(This script copies `catalog-info.yaml` and the `docs/` tree it references into `configs/catalog-entities/`, configures `dynamic-plugins.override.yaml`, and prepares `app-config.local.yaml` with the home page enabled and both demo customization blocks commented out)*
+The script writes only into the `rhdh-customizations/` workspace
+(`$RHDH_LOCAL_SETUP_DIR`, default `~/Source/redhat-developer/rhdh-local-setup`),
+which is the single place local overrides are edited:
 
-### 3. Start your local RHDH instance:
+| File written | Contents |
+| --- | --- |
+| `compose.override.yaml` | the read-only mount of this checkout |
+| `configs/catalog-entities/components.override.yaml` | generated from `catalog-info.yaml`, `techdocs-ref` repointed at the mount |
+| `configs/dynamic-plugins/dynamic-plugins.override.yaml` | the plugin set below |
+| `configs/app-config/app-config.local.yaml` | guest auth and the extension scenes, both blocks commented out |
+
+### 1. Install the demo configuration:
 ```bash
-cd "$RHDH_LOCAL_DIR"
-podman compose up -d
+./setup-rhdh-local.sh            # add --dry-run to preview, --remove to undo
 ```
+Any file of that name it did not write itself is backed up to `<file>.bak-<timestamp>`
+before it is replaced, and `--remove` deletes only files carrying the
+`Managed by demo-catalog/setup-rhdh-local.sh` marker.
+
+### 2. Apply the customizations and start RHDH:
+```bash
+~/bin/rhdh-local up      # copies the customizations into rhdh-local/, then compose up
+```
+`~/bin/rhdh-local apply` on its own just refreshes the copies without starting anything.
 
 Verify in your browser:
 - **Homepage:** `http://localhost:7007/` (loads cleanly)
@@ -68,7 +80,10 @@ Verify in your browser:
 
 ## Demo Customization Walkthrough
 
-Keep `$RHDH_LOCAL_DIR/configs/app-config/app-config.local.yaml` open in your text editor.
+Keep `$RHDH_LOCAL_SETUP_DIR/rhdh-customizations/configs/app-config/app-config.local.yaml`
+(default `~/Source/redhat-developer/rhdh-local-setup/rhdh-customizations/...`) open in your
+text editor. Edit it there, not in the `rhdh-local` clone — `~/bin/rhdh-local apply`
+overwrites the clone's copy from the workspace.
 
 ### Scene 1: Baseline (Out-of-the-Box Defaults)
 - Open `http://localhost:7007/catalog/default/component/order-service`.
@@ -83,7 +98,7 @@ Keep `$RHDH_LOCAL_DIR/configs/app-config/app-config.local.yaml` open in your tex
   - Tab order: **Overview | CI/CD | Documentation | APIs**.
 - Save file and restart:
   ```bash
-  cd "$RHDH_LOCAL_DIR" && podman compose stop rhdh && podman compose start rhdh
+  ~/bin/rhdh-local up   # apply the edit, then recreate the container
   ```
 - Refresh `order-service` to show the standardized developer experience.
 
@@ -95,6 +110,6 @@ Keep `$RHDH_LOCAL_DIR/configs/app-config/app-config.local.yaml` open in your tex
   - Turns off bulky relations graph (`entity-card:catalog-graph/relations: false`).
 - Save file and restart:
   ```bash
-  cd "$RHDH_LOCAL_DIR" && podman compose stop rhdh && podman compose start rhdh
+  ~/bin/rhdh-local up   # apply the edit, then recreate the container
   ```
 - Refresh `order-service` to show the single-pane-of-glass architecture overview.
